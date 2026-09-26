@@ -1,7 +1,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("../src/domain/", import.meta.url);
+const root = fileURLToPath(new URL("../src/domain/", import.meta.url));
 const forbidden = [
   { label: "React", pattern: /(?:from\s+["']react(?:\/[^"']*)?["']|import\s*\(["']react(?:\/[^"']*)?["']\))/ },
   { label: "Firebase", pattern: /(?:from\s+["']firebase(?:\/[^"']*)?["']|import\s*\(["']firebase(?:\/[^"']*)?["']\))/ },
