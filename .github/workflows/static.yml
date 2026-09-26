@@ -28,6 +28,8 @@ jobs:
         run: npm ci
       - name: Typecheck
         run: npm run typecheck
+      - name: Architecture boundaries
+        run: npm run check:boundaries
       - name: Test
         run: npm test
       - name: Build
