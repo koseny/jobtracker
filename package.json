@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:boundaries": "node scripts/check-boundaries.mjs"
   },
   "dependencies": {
     "firebase": "^12.4.0",
