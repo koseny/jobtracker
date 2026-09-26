@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: "pages-${{ github.ref }}"
@@ -24,22 +24,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Bootstrap lockfile when absent
-        if: ${{ hashFiles('package-lock.json') == '' }}
-        run: npm install --package-lock-only --ignore-scripts
-      - name: Commit bootstrapped lockfile
-        if: ${{ github.event_name == 'pull_request' && hashFiles('package-lock.json') != '' }}
-        run: |
-          if git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          git commit -m "EB-1: lock npm dependencies"
-          git fetch origin ${{ github.head_ref }}
-          git rebase origin/${{ github.head_ref }}
-          git push origin HEAD:${{ github.head_ref }}
       - name: Install locked dependencies
         run: npm ci
       - name: Typecheck
