@@ -50,5 +50,6 @@ describe("HCF R1 domain core", () => {
   it("rejects invalid item input before commit", () => {
     expect(() => validateItem({ ...spending, name: "   " })).toThrow(DomainValidationError);
     expect(() => validateItem({ ...spending, estimatedAmountHuf: 12.5 })).toThrow(DomainValidationError);
+    expect(() => validateItem({ ...spending, schedule: { frequency: "oneTime", date: "2026-02-30" } })).toThrow(DomainValidationError);
   });
 });
