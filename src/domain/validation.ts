@@ -11,8 +11,8 @@ export function validateItem(item: CashFlowItem): void {
     throw new DomainValidationError("Amount must be a non-negative integer HUF value.");
   }
 
-  if (item.schedule.frequency === "oneTime" && !/^\d{4}-\d{2}-\d{2}$/.test(item.schedule.date)) {
-    throw new DomainValidationError("One-time schedule date must use YYYY-MM-DD.");
+  if (item.schedule.frequency === "oneTime" && !isValidIsoDate(item.schedule.date)) {
+    throw new DomainValidationError("One-time schedule date must be a real calendar date using YYYY-MM-DD.");
   }
 }
 
