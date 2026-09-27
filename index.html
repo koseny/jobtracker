@@ -1,34 +1,13 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="CivilBonus Google authentication experiment">
-  <title>CivilBonus</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <main class="shell">
-    <section class="card" aria-live="polite">
-      <div class="brand">CivilBonus</div>
-      <div id="loading-view" class="view"><div class="spinner" aria-hidden="true"></div><p>Checking authentication…</p></div>
-      <div id="signed-out-view" class="view hidden">
-        <p class="eyebrow">Authentication experiment</p>
-        <h1>Welcome</h1>
-        <p class="muted">Sign in with your Google account to continue.</p>
-        <button id="sign-in-button" class="google-button" type="button"><span class="google-mark" aria-hidden="true">G</span>Continue with Google</button>
-      </div>
-      <div id="signed-in-view" class="view hidden">
-        <p class="eyebrow">Authenticated</p>
-        <img id="user-photo" class="avatar hidden" alt="">
-        <h1>Welcome, <span id="user-name">user</span></h1>
-        <p id="user-email" class="email"></p>
-        <p class="success">You are authenticated with Google.</p>
-        <button id="sign-out-button" class="secondary-button" type="button">Sign out</button>
-      </div>
-      <p id="error-message" class="error hidden" role="alert"></p>
-    </section>
-  </main>
-  <script type="module" src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="CivilBonus" />
+    <title>CivilBonus</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
