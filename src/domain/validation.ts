@@ -1,4 +1,5 @@
 import type { BufferPolicy, CashFlowItem } from "./cashFlow";
+import { isValidIsoDate } from "./time";
 
 export class DomainValidationError extends Error {}
 
