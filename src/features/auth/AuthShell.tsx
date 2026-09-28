@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import type { IdentityAdapter, IdentityState } from "../../adapters/identity/identity";
+import type { CashFlowRepository, CashFlowWorkspace } from "../../domain/cashFlow";
+import { ensureWorkspace } from "../../application/cashFlowService";
 
-type Props = { identity: IdentityAdapter };
+type Props = { identity: IdentityAdapter; cashFlowRepository: CashFlowRepository };
 
 const initialState: IdentityState = { status: "loading" };
+const WORKSPACE_ID = "home";
 
 function messageFor(error: unknown) {
   const code =
@@ -12,15 +15,43 @@ function messageFor(error: unknown) {
       : "";
   return code === "auth/popup-closed-by-user"
     ? "Google sign-in was cancelled."
-    : "Sign-in could not be completed. Please try again.";
+    : "The operation could not be completed. Please try again.";
 }
 
-export function AuthShell({ identity }: Props) {
+export function AuthShell({ identity, cashFlowRepository }: Props) {
   const [state, setState] = useState<IdentityState>(initialState);
+  const [workspace, setWorkspace] = useState<CashFlowWorkspace | null>(null);
+  const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => identity.subscribe(setState), [identity]);
+
+  useEffect(() => {
+    if (state.status !== "signedIn") {
+      setWorkspace(null);
+      setWorkspaceLoading(false);
+      return;
+    }
+
+    let active = true;
+    setWorkspaceLoading(true);
+    setError("");
+    ensureWorkspace(cashFlowRepository, state.user.id, WORKSPACE_ID, new Date().toISOString())
+      .then(result => {
+        if (active) setWorkspace(result);
+      })
+      .catch(cause => {
+        console.error(cause);
+        if (active) setError("Your local Home Cash Flow workspace could not be opened.");
+      })
+      .finally(() => {
+        if (active) setWorkspaceLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [cashFlowRepository, state]);
 
   async function run(action: () => Promise<void>) {
     setError("");
@@ -49,9 +80,9 @@ export function AuthShell({ identity }: Props) {
 
         {state.status === "signedOut" && (
           <div className="view">
-            <p className="eyebrow">Authentication experiment</p>
+            <p className="eyebrow">Home Cash Flow</p>
             <h1>Welcome</h1>
-            <p className="muted">Sign in with your Google account to continue.</p>
+            <p className="muted">Sign in with your Google account to open your local cash-flow workspace.</p>
             <button className="google-button" disabled={busy} onClick={() => run(() => identity.signInWithGoogle())}>
               <span className="google-mark" aria-hidden="true">G</span>
               Continue with Google
@@ -61,13 +92,19 @@ export function AuthShell({ identity }: Props) {
 
         {state.status === "signedIn" && (
           <div className="view">
-            <p className="eyebrow">Authenticated</p>
+            <p className="eyebrow">Home Cash Flow</p>
             {state.user.photoUrl && (
               <img className="avatar" src={state.user.photoUrl} alt={state.user.displayName ? state.user.displayName + "'s profile picture" : "Google profile picture"} />
             )}
             <h1>Welcome, {state.user.displayName || "Google user"}</h1>
             <p className="email">{state.user.email || ""}</p>
-            <p className="success">You are authenticated with Google.</p>
+            {workspaceLoading && <p className="muted">Opening your local workspace…</p>}
+            {workspace && (
+              <div>
+                <p className="success">Your local Home Cash Flow workspace is ready.</p>
+                <p className="muted">{workspace.items.length} cash-flow items · {workspace.currency}</p>
+              </div>
+            )}
             <button className="secondary-button" disabled={busy} onClick={() => run(() => identity.signOut())}>Sign out</button>
           </div>
         )}
