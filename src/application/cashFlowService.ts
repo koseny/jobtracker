@@ -61,3 +61,34 @@ export async function deleteItem(
   await repository.save(updated);
   return updated;
 }
+
+
+export async function ensureWorkspace(
+  repository: CashFlowRepository,
+  ownerPartitionId: string,
+  workspaceId: string,
+  now: string,
+): Promise<CashFlowWorkspace> {
+  const existing = await repository.load(ownerPartitionId, workspaceId);
+  if (existing) {
+    assertOwnership(existing, ownerPartitionId);
+    return existing;
+  }
+
+  const workspace: CashFlowWorkspace = {
+    workspaceId,
+    ownerPartitionId,
+    schemaVersion: 1,
+    currency: "HUF",
+    bufferPolicy: {
+      roundingValueHuf: 1000,
+      roundingThresholdHuf: 500,
+      applyToFixed: false,
+    },
+    items: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  await saveWorkspace(repository, ownerPartitionId, workspace);
+  return workspace;
+}
