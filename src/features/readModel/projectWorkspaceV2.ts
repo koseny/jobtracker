@@ -544,8 +544,12 @@ function calendarDays(
 
   for (const plan of workspace.sourceState.planItems) {
     if (plan.planStatus !== "ACTIVE" || !plan.expectedDate) continue;
-    const rule = plan.recurrenceRuleId
-      ? workspace.sourceState.recurrenceRules.find(x => x.recurrenceRuleId === plan.recurrenceRuleId)
+    const template = plan.planTemplateId
+      ? workspace.sourceState.planTemplates.find(x => x.planTemplateId === plan.planTemplateId)
+      : undefined;
+    const recurrenceRuleId = plan.recurrenceRuleId ?? template?.recurrenceRuleId;
+    const rule = recurrenceRuleId
+      ? workspace.sourceState.recurrenceRules.find(x => x.recurrenceRuleId === recurrenceRuleId)
       : null;
     add(plan.expectedDate, {
       id: plan.planItemId,
