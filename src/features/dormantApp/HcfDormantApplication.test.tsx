@@ -12,13 +12,14 @@ describe("HcfDormantApplication", () => {
       language: "EN",
       theme: "LIGHT",
       revision: 1,
+      createdAt: "2026-09-30T19:00:00Z",
       updatedAt: "2026-09-30T19:00:00Z",
     };
     await repository.save(preferences, null);
 
     const html = renderToStaticMarkup(
       <HcfDormantApplication
-        user={{ id: "owner-fixture", displayName: "Fixture User", email: "fixture@example.com" }}
+        user={{ id: "owner-fixture", displayName: "Fixture User", email: "fixture@example.com", photoUrl: null }}
         preferencesRepository={repository}
         onSignOut={async () => undefined}
         initialDestination="overview"
