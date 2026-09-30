@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { LanguageCode } from "../../domain/ownerPreferences";
 import { formatMoney } from "../presentation/presentationModel";
 import {
@@ -32,10 +32,6 @@ export function PlanningScreen({
   onRecordPayment,
 }: Props) {
   const [subview, setSubview] = useState<Subview>(initialSubview);
-  const sourcesById = useMemo(
-    () => new Map(model.incomeSources.map(source => [source.incomeSourceId, source])),
-    [model.incomeSources],
-  );
 
   return (
     <section className="hcf-ap-screen">
