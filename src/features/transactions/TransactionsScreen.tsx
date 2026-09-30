@@ -60,7 +60,7 @@ function TransactionDetailPanel({
         <div><dt>{t(language, "status")}</dt><dd>{detail.lifecycleStatus}</dd></div>
         <div><dt>{t(language, "account")}</dt><dd>{detail.accountLabel}{detail.counterAccountLabel ? ` → ${detail.counterAccountLabel}` : ""}</dd></div>
         <div><dt>{t(language, "category")}</dt><dd>{detail.categoryLabel || "—"}</dd></div>
-        <div><dt>{t(language, "amount")}</dt><dd>{formatMoney(detail.amount, language)}</dd></div>
+        <div><dt>{t(language, "amount")}</dt><dd>{formatMoney(detail.amount, language)}{detail.counterAmount ? ` → ${formatMoney(detail.counterAmount, language)}` : ""}</dd></div>
         <div><dt>{t(language, "planMatch")}</dt><dd>{detail.planMatchLabel || "—"}</dd></div>
         <div><dt>{t(language, "dailyEvent")}</dt><dd>{detail.linkedDailyEventLabel || "—"}</dd></div>
         <div><dt>{t(language, "allocation")}</dt><dd>{detail.allocationRelationLabel || "—"}</dd></div>
@@ -242,7 +242,7 @@ export function TransactionsScreen({
               <span>{row.movementType}</span>
               <span>{row.accountLabel}{row.counterAccountLabel ? ` → ${row.counterAccountLabel}` : ""}</span>
               <span>{row.categoryLabel || "—"}</span>
-              <strong>{formatMoney(row.amount, language)}</strong>
+              <strong>{formatMoney(row.amount, language)}{row.counterAmount ? ` → ${formatMoney(row.counterAmount, language)}` : ""}</strong>
               <span>{row.reconciliationStatus || row.lifecycleStatus}</span>
             </button>
           ))}
