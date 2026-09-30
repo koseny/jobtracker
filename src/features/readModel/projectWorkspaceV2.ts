@@ -211,8 +211,10 @@ function accountEffect(row: CurrentMovement, account: Account): number {
     return payload.accountId === account.accountId ? -payload.amount.amountMinor : 0;
   }
 
-  if (payload.sourceAccountId === account.accountId) return -payload.sourceAmount.amountMinor;
-  if (payload.destinationAccountId === account.accountId) return payload.destinationAmount.amountMinor;
+  if (payload.movementType === "TRANSFER") {
+    if (payload.sourceAccountId === account.accountId) return -payload.sourceAmount.amountMinor;
+    if (payload.destinationAccountId === account.accountId) return payload.destinationAmount.amountMinor;
+  }
   return 0;
 }
 
