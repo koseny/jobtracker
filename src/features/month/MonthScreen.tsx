@@ -19,6 +19,7 @@ type FocusPanel = "INCOME" | "EXPENSE" | null;
 type Props = {
   language: LanguageCode;
   model: MonthViewModel;
+  initialFocusPanel?: Exclude<FocusPanel, null>;
   onPreviousMonth?: () => void;
   onNextMonth?: () => void;
   onCurrentMonth?: () => void;
@@ -342,6 +343,7 @@ function PositionPanel({
 export function MonthScreen({
   language,
   model,
+  initialFocusPanel,
   onPreviousMonth,
   onNextMonth,
   onCurrentMonth,
@@ -350,7 +352,7 @@ export function MonthScreen({
   onOpenItem,
   onOpenAccounts,
 }: Props) {
-  const [focusPanel, setFocusPanel] = useState<FocusPanel>(null);
+  const [focusPanel, setFocusPanel] = useState<FocusPanel>(initialFocusPanel ?? null);
   const [incomeCollapsed, setIncomeCollapsed] = useState<Set<string>>(new Set());
   const [spendingCollapsed, setSpendingCollapsed] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
