@@ -1,0 +1,24 @@
+.hcf-dormant-deferred {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 32px;
+  border: 1px dashed var(--hcf-border);
+  border-radius: 14px;
+  background: var(--hcf-surface);
+  color: var(--hcf-text);
+  text-align: center;
+}
+
+.hcf-dormant-deferred strong {
+  font-size: 1.25rem;
+}
+
+.hcf-dormant-deferred p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--hcf-muted);
+  line-height: 1.5;
+}

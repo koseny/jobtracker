@@ -16,6 +16,7 @@ import {
   shellText,
   type AppDestination,
 } from "./appShellModel";
+import { HcfShellPreferenceProvider } from "./HcfShellPreferenceContext";
 import "./appShell.css";
 
 type Props = {
@@ -130,6 +131,7 @@ export function HcfAppShell({
   const railExpanded = focusRail && focusRailExpanded;
 
   return (
+    <HcfShellPreferenceProvider value={{ language, theme }}>
     <div
       className={[
         "hcf-app-shell",
@@ -279,5 +281,6 @@ export function HcfAppShell({
         </main>
       </section>
     </div>
+    </HcfShellPreferenceProvider>
   );
 }
