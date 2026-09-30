@@ -19,6 +19,7 @@ export interface RecentTransactionModel {
   description: string;
   movementType: "INCOME" | "EXPENSE" | "TRANSFER";
   amount: Money;
+  counterAmount?: Money;
 }
 
 export interface ComparisonPoint {
@@ -32,6 +33,7 @@ export interface ComparisonPoint {
 export interface ComparisonSeries {
   currencyCode: CurrencyCode;
   points: ComparisonPoint[];
+  incomplete?: boolean;
 }
 
 export interface TrajectoryPoint {
@@ -44,6 +46,7 @@ export interface TrajectoryPoint {
 export interface TrajectorySeries {
   currencyCode: CurrencyCode;
   points: TrajectoryPoint[];
+  incomplete?: boolean;
 }
 
 export interface UpcomingItemModel {
