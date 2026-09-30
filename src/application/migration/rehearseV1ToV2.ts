@@ -14,8 +14,20 @@ export interface MigrationRehearsalResult {
   persistedCandidate: CashFlowWorkspaceV2;
 }
 
-function sameJson(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (typeof value !== "object" || value === null) return value;
+
+  const record = value as Record<string, unknown>;
+  const sorted: Record<string, unknown> = {};
+  for (const key of Object.keys(record).sort()) {
+    sorted[key] = canonicalize(record[key]);
+  }
+  return sorted;
+}
+
+function sameStructure(a: unknown, b: unknown): boolean {
+  return JSON.stringify(canonicalize(a)) === JSON.stringify(canonicalize(b));
 }
 
 export async function rehearseV1ToV2Migration(
@@ -40,7 +52,7 @@ export async function rehearseV1ToV2Migration(
   );
 
   const restoredBackup = restoreLegacyWorkspaceBackup(backupJson, ownerPartitionId);
-  if (!sameJson(restoredBackup, sourceSnapshot)) {
+  if (!sameStructure(restoredBackup, sourceSnapshot)) {
     throw new MigrationRehearsalVerificationError(
       "Serialized backup does not restore to the original legacy workspace.",
     );
@@ -66,14 +78,14 @@ export async function rehearseV1ToV2Migration(
   }
   validateWorkspaceV2(persistedCandidate);
 
-  if (!sameJson(persistedCandidate, candidate)) {
+  if (!sameStructure(persistedCandidate, candidate)) {
     throw new MigrationRehearsalVerificationError(
       "Persisted v2 rehearsal candidate differs from the validated migration candidate.",
     );
   }
 
   const sourceAfter = await legacyRepository.load(ownerPartitionId, workspaceId);
-  if (!sourceAfter || !sameJson(sourceAfter, sourceSnapshot)) {
+  if (!sourceAfter || !sameStructure(sourceAfter, sourceSnapshot)) {
     throw new MigrationRehearsalVerificationError(
       "Legacy source changed during migration rehearsal.",
     );
