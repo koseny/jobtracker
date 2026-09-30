@@ -10,6 +10,7 @@ import { MonthScreen } from "../month/MonthScreen";
 import { OverviewScreen } from "../overview/OverviewScreen";
 import { PlanningScreen } from "../planning/PlanningScreen";
 import { TransactionsScreen } from "../transactions/TransactionsScreen";
+import type { HcfOperationalViewModels } from "../readModel/operationalViewModels";
 import { shellFocusMode } from "./dormantAppModel";
 import {
   buildDormantHcfFixture,
@@ -81,6 +82,7 @@ type WorkspaceProps = {
   onNavigate: (destination: AppDestination) => void;
   onSelectedMonthChange: (monthId: string) => void;
   onCalendarFocusChange: (focus: boolean) => void;
+  viewModels?: HcfOperationalViewModels;
   onActionIntent?: (intent: DormantActionIntent) => void;
 };
 
@@ -90,12 +92,13 @@ export function DormantHcfWorkspace({
   onNavigate,
   onSelectedMonthChange,
   onCalendarFocusChange,
+  viewModels,
   onActionIntent,
 }: WorkspaceProps) {
   const { language } = useHcfShellPreferences();
-  const fixture = useMemo(
-    () => buildDormantHcfFixture(selectedMonth, language),
-    [language, selectedMonth],
+  const models = useMemo(
+    () => viewModels ?? buildDormantHcfFixture(selectedMonth, language),
+    [language, selectedMonth, viewModels],
   );
 
   const emit = (intent: DormantActionIntent) => onActionIntent?.(intent);
@@ -108,7 +111,7 @@ export function DormantHcfWorkspace({
       return (
         <OverviewScreen
           language={language}
-          model={fixture.overview}
+          model={models.overview}
           onViewAllTransactions={() => onNavigate("transactions")}
           onOpenCalendar={() => onNavigate("calendar")}
           onOpenAccounts={() => onNavigate("accounts")}
@@ -118,7 +121,7 @@ export function DormantHcfWorkspace({
       return (
         <MonthScreen
           language={language}
-          model={fixture.month}
+          model={models.month}
           onPreviousMonth={previousMonth}
           onNextMonth={nextMonth}
           onCurrentMonth={currentMonth}
@@ -133,7 +136,7 @@ export function DormantHcfWorkspace({
         <CalendarScreen
           key={selectedMonth}
           language={language}
-          model={fixture.calendar}
+          model={models.calendar}
           onModeChange={mode => onCalendarFocusChange(mode === "FOCUS")}
           onPreviousMonth={previousMonth}
           onNextMonth={nextMonth}
@@ -149,8 +152,8 @@ export function DormantHcfWorkspace({
           key={selectedMonth}
           language={language}
           selectedMonth={selectedMonth}
-          rows={fixture.transactionRows}
-          detailsByMovementId={fixture.transactionDetails}
+          rows={models.transactionRows}
+          detailsByMovementId={models.transactionDetails}
           onSelectedMonthChange={onSelectedMonthChange}
           onCorrect={id => emit({ kind: "TRANSACTION_CORRECT", id })}
           onVoid={id => emit({ kind: "TRANSACTION_VOID", id })}
@@ -161,7 +164,7 @@ export function DormantHcfWorkspace({
       return (
         <AccountsScreen
           language={language}
-          model={fixture.accounts}
+          model={models.accounts}
           onAddAccount={() => emit({ kind: "ACCOUNT_ADD" })}
           onTransfer={() => emit({ kind: "ACCOUNT_TRANSFER" })}
           onReconcile={() => emit({ kind: "ACCOUNT_RECONCILE" })}
@@ -177,7 +180,7 @@ export function DormantHcfWorkspace({
       return (
         <PlanningScreen
           language={language}
-          model={fixture.planning}
+          model={models.planning}
           onAddTemplate={() => emit({ kind: "PLAN_TEMPLATE_ADD" })}
           onOpenTemplate={id => emit({ kind: "PLAN_TEMPLATE_OPEN", id })}
           onAddIncomeSource={() => emit({ kind: "INCOME_SOURCE_ADD" })}

@@ -46,6 +46,14 @@ function ComparisonChart({
   series: ComparisonSeries;
   language: LanguageCode;
 }) {
+  if (series.points.length === 0) {
+    return (
+      <div className="hcf-chart-empty">
+        {series.incomplete ? presentationText(language, "fxUnavailable") : "—"}
+      </div>
+    );
+  }
+
   const extent = chartExtent(
     series.points.flatMap(point => [
       point.incomeMinor,
@@ -93,7 +101,11 @@ function TrajectoryChart({
   language: LanguageCode;
 }) {
   if (series.points.length === 0) {
-    return <div className="hcf-chart-empty">—</div>;
+    return (
+      <div className="hcf-chart-empty">
+        {series.incomplete ? presentationText(language, "fxUnavailable") : "—"}
+      </div>
+    );
   }
 
   const values = series.points.flatMap(point => [
@@ -214,6 +226,10 @@ export function OverviewScreen({
           ) : (
             <TrajectoryChart series={model.trajectory} language={language} />
           )}
+          {((outlookMode === "COMPARISON" && model.comparison.incomplete) ||
+            (outlookMode === "TRAJECTORY" && model.trajectory.incomplete)) && (
+            <p className="hcf-card-warning">{presentationText(language, "fxUnavailable")}</p>
+          )}
         </div>
       </article>
 
@@ -235,7 +251,10 @@ export function OverviewScreen({
                 <span>{transaction.occurredOn}</span>
               </div>
               <span className="hcf-transaction-type">{transaction.movementType}</span>
-              <strong>{formatMoney(transaction.amount, language)}</strong>
+              <strong>
+                {formatMoney(transaction.amount, language)}
+                {transaction.counterAmount ? ` → ${formatMoney(transaction.counterAmount, language)}` : ""}
+              </strong>
             </div>
           ))}
         </div>

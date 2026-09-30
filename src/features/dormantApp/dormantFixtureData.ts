@@ -7,17 +7,10 @@ import type {
   TransactionLedgerRowModel,
 } from "../calendarTransactions/calendarTransactionModel";
 import type { MonthViewModel, OverviewViewModel } from "../presentation/presentationModel";
+import type { HcfOperationalViewModels } from "../readModel/operationalViewModels";
 import { presentationText } from "../presentation/presentationText";
 
-export interface DormantHcfFixture {
-  overview: OverviewViewModel;
-  month: MonthViewModel;
-  calendar: CalendarMonthViewModel;
-  transactionRows: TransactionLedgerRowModel[];
-  transactionDetails: Record<string, TransactionDetailModel>;
-  accounts: AccountsViewModel;
-  planning: PlanningViewModel;
-}
+export type DormantHcfFixture = HcfOperationalViewModels;
 
 export function normalizeMonthId(monthId: string): string {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(monthId)) {

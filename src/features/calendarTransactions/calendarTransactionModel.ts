@@ -52,6 +52,7 @@ export interface TransactionLedgerRowModel {
   counterAccountLabel?: string;
   categoryLabel?: string;
   amount: Money;
+  counterAmount?: Money;
   lifecycleStatus: TransactionLifecycleStatus;
   reconciliationStatus?: string;
 }
