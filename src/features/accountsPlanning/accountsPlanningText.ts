@@ -39,6 +39,7 @@ export type AccountsPlanningTextKey =
   | "categoryGroup"
   | "income"
   | "expense"
+  | "none"
   | "oneTime"
   | "monthly"
   | "quarterly"
@@ -68,7 +69,7 @@ const TEXT: Record<LanguageCode, Record<AccountsPlanningTextKey, string>> = {
     planning:"Planning", planTemplates:"Plan Templates", incomeWork:"Income & Work", name:"Name",
     direction:"Direction", plannedAmount:"Planned amount", recurrence:"Recurrence", timing:"Timing",
     categoryGroup:"Category / Group", income:"Income", expense:"Expense", oneTime:"One time", monthly:"Monthly",
-    quarterly:"Quarterly", weekly:"Weekly", multipleWithinMonth:"Multiple within month", incomeSources:"Income Sources",
+    quarterly:"Quarterly", weekly:"Weekly", multipleWithinMonth:"Multiple within month", none:"No recurrence", incomeSources:"Income Sources",
     unit:"Unit", unitPrice:"Unit price", workOccurrences:"Work Occurrences", date:"Date", source:"Source",
     quantity:"Quantity", expectedValue:"Expected value", completed:"Completed", planned:"Planned",
     recordPayment:"Record payment", nonCashNotice:"Completing work is operational only; it does not create actual income."
@@ -83,7 +84,7 @@ const TEXT: Record<LanguageCode, Record<AccountsPlanningTextKey, string>> = {
     planning:"Tervezés", planTemplates:"Tervsablonok", incomeWork:"Bevétel és munka", name:"Név",
     direction:"Irány", plannedAmount:"Tervezett összeg", recurrence:"Ismétlődés", timing:"Időzítés",
     categoryGroup:"Kategória / Csoport", income:"Bevétel", expense:"Kiadás", oneTime:"Egyszeri", monthly:"Havi",
-    quarterly:"Negyedéves", weekly:"Heti", multipleWithinMonth:"Többször egy hónapon belül", incomeSources:"Bevételi források",
+    quarterly:"Negyedéves", weekly:"Heti", multipleWithinMonth:"Többször egy hónapon belül", none:"Nincs ismétlődés", incomeSources:"Bevételi források",
     unit:"Egység", unitPrice:"Egységár", workOccurrences:"Munkavégzések", date:"Dátum", source:"Forrás",
     quantity:"Mennyiség", expectedValue:"Várt érték", completed:"Teljesítve", planned:"Tervezett",
     recordPayment:"Fizetés rögzítése", nonCashNotice:"A munka teljesítése csak működési állapot; nem hoz létre tényleges bevételt."
@@ -98,7 +99,7 @@ const TEXT: Record<LanguageCode, Record<AccountsPlanningTextKey, string>> = {
     planning:"Planung", planTemplates:"Planvorlagen", incomeWork:"Einkommen & Arbeit", name:"Name",
     direction:"Richtung", plannedAmount:"Planbetrag", recurrence:"Wiederholung", timing:"Zeitpunkt",
     categoryGroup:"Kategorie / Gruppe", income:"Eingang", expense:"Ausgang", oneTime:"Einmalig", monthly:"Monatlich",
-    quarterly:"Vierteljährlich", weekly:"Wöchentlich", multipleWithinMonth:"Mehrfach im Monat", incomeSources:"Einkommensquellen",
+    quarterly:"Vierteljährlich", weekly:"Wöchentlich", multipleWithinMonth:"Mehrfach im Monat", none:"Keine Wiederholung", incomeSources:"Einkommensquellen",
     unit:"Einheit", unitPrice:"Einheitspreis", workOccurrences:"Arbeitseinsätze", date:"Datum", source:"Quelle",
     quantity:"Menge", expectedValue:"Erwarteter Wert", completed:"Erledigt", planned:"Geplant",
     recordPayment:"Zahlung erfassen", nonCashNotice:"Arbeitsabschluss ist nur operativ und erzeugt keinen Ist-Eingang."
