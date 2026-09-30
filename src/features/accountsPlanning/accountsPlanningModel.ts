@@ -50,7 +50,7 @@ export interface PlanTemplatePresentationRow {
   name: string;
   direction: PlanDirection;
   plannedAmount: Money;
-  recurrence: RecurrenceRule["kind"];
+  recurrence: RecurrenceRule["kind"] | "NONE";
   timingLabel?: string;
   categoryGroupLabel?: string;
   active: boolean;
@@ -129,9 +129,10 @@ export function allocationRemaining(
 }
 
 export function recurrenceLabelKey(
-  recurrence: RecurrenceRule["kind"],
-): "oneTime" | "monthly" | "quarterly" | "weekly" | "multipleWithinMonth" {
+  recurrence: RecurrenceRule["kind"] | "NONE",
+): "none" | "oneTime" | "monthly" | "quarterly" | "weekly" | "multipleWithinMonth" {
   switch (recurrence) {
+    case "NONE": return "none";
     case "ONE_TIME": return "oneTime";
     case "MONTHLY": return "monthly";
     case "QUARTERLY": return "quarterly";
