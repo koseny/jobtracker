@@ -145,6 +145,8 @@ export interface MoneyMovement {
   currentRevisionNo: number;
   createdAt: string;
   updatedAt: string;
+  voidedAt?: string;
+  voidReason?: string;
 }
 
 export interface MoneyMovementRevision {
