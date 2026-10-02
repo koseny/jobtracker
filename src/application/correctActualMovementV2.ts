@@ -1,4 +1,4 @@
-import type { CashFlowWorkspaceV2, IncomeExpenseMovementRevisionPayload } from "../domain/v2/cashFlowV2";
+import type { CashFlowSourceStateV2, CashFlowWorkspaceV2, IncomeExpenseMovementRevisionPayload } from "../domain/v2/cashFlowV2";
 import type { CashFlowRepositoryV2 } from "../domain/v2/repositoryV2";
 import { DomainV2ValidationError } from "../domain/v2/validationV2";
 import { executeWorkspaceV2Command, type WorkspaceV2CommandContext } from "./executeWorkspaceV2Command";
@@ -10,6 +10,48 @@ export interface CorrectActualMovementV2Command extends WorkspaceV2CommandContex
 }
 
 export class ActualMovementV2CorrectionScopeError extends Error {}
+export class LinkedActualMovementV2DependencyError extends DomainV2ValidationError {}
+
+function validateLinkedCorrection(source: CashFlowSourceStateV2, movementId: string, payload: IncomeExpenseMovementRevisionPayload): void {
+  const realizations = source.planRealizations.filter(value => value.movementId === movementId);
+  const events = source.allocationEvents.filter(value => value.movementId === movementId);
+  if (realizations.length === 0 && events.length === 0) {
+    throw new ActualMovementV2CorrectionScopeError("This command requires an existing financial link.");
+  }
+
+  let realizedTotal = 0n;
+  for (const realization of realizations) {
+    const plan = source.planItems.find(value => value.planItemId === realization.planItemId)!;
+    if (plan.direction !== payload.movementType ||
+        plan.currentPlannedAmount.currencyCode !== payload.amount.currencyCode ||
+        realization.realizedAmount.currencyCode !== payload.amount.currencyCode ||
+        !Number.isSafeInteger(realization.realizedAmount.amountMinor)) {
+      throw new LinkedActualMovementV2DependencyError("Corrected actual is incompatible with a linked PlanRealization.");
+    }
+    realizedTotal += BigInt(realization.realizedAmount.amountMinor);
+  }
+  if (realizedTotal > BigInt(payload.amount.amountMinor)) {
+    throw new LinkedActualMovementV2DependencyError("Linked realized total exceeds the corrected actual amount.");
+  }
+
+  let appliedTotal = 0n;
+  for (const event of events) {
+    if (event.eventType !== "APPLY") {
+      throw new ActualMovementV2CorrectionScopeError("Movement-linked non-APPLY allocation events need separate resolution.");
+    }
+    const allocation = source.allocations.find(value => value.allocationId === event.allocationId)!;
+    if (payload.movementType !== "EXPENSE" ||
+        !payload.accountId || payload.accountId !== allocation.accountId ||
+        event.amount.currencyCode !== payload.amount.currencyCode ||
+        !Number.isSafeInteger(event.amount.amountMinor)) {
+      throw new LinkedActualMovementV2DependencyError("Corrected expense is incompatible with a linked allocation APPLY.");
+    }
+    appliedTotal += BigInt(event.amount.amountMinor);
+  }
+  if (appliedTotal > BigInt(payload.amount.amountMinor)) {
+    throw new LinkedActualMovementV2DependencyError("Linked APPLY total exceeds the corrected expense amount.");
+  }
+}
 
 /**
  * Append a correction to an ACTIVE standalone INCOME/EXPENSE. The supplied
@@ -21,6 +63,26 @@ export class ActualMovementV2CorrectionScopeError extends Error {}
 export async function correctActualMovementV2(
   repository: CashFlowRepositoryV2,
   command: CorrectActualMovementV2Command,
+): Promise<CashFlowWorkspaceV2> {
+  return correctMovement(repository, command, "standalone");
+}
+
+/**
+ * Correct an ACTIVE financially linked actual only when every existing
+ * PlanRealization and allocation APPLY remains valid. Links are retained; a
+ * caller must resolve incompatible dependencies in a separate transaction.
+ */
+export async function correctLinkedActualMovementV2(
+  repository: CashFlowRepositoryV2,
+  command: CorrectActualMovementV2Command,
+): Promise<CashFlowWorkspaceV2> {
+  return correctMovement(repository, command, "linked");
+}
+
+async function correctMovement(
+  repository: CashFlowRepositoryV2,
+  command: CorrectActualMovementV2Command,
+  scope: "standalone" | "linked",
 ): Promise<CashFlowWorkspaceV2> {
   const request = structuredClone(command);
   const payload = request.payload;
@@ -43,9 +105,11 @@ export async function correctActualMovementV2(
     if (payload.movementType !== movement.movementType) {
       throw new DomainV2ValidationError("Correction must preserve the stable movement type.");
     }
-    if (source.planRealizations.some(value => value.movementId === movement.movementId) ||
-        source.allocationEvents.some(value => value.movementId === movement.movementId)) {
-      throw new ActualMovementV2CorrectionScopeError("Financially linked corrections require dependency-aware commands outside this slice.");
+    if (scope === "linked") {
+      validateLinkedCorrection(source, movement.movementId, payload);
+    } else if (source.planRealizations.some(value => value.movementId === movement.movementId) ||
+               source.allocationEvents.some(value => value.movementId === movement.movementId)) {
+      throw new ActualMovementV2CorrectionScopeError("Financially linked corrections require the dependency-aware command.");
     }
     if (payload.categoryId !== undefined &&
         !source.categories.some(category => category.categoryId === payload.categoryId)) {
