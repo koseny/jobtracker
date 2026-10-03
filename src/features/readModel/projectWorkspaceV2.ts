@@ -272,6 +272,7 @@ function allocationAmountsAt(
 ): AllocationAmounts {
   let grossReserved = 0;
   let applied = 0;
+  const movementStatus = new Map(workspace.sourceState.moneyMovements.map(value => [value.movementId, value.lifecycleStatus]));
 
   for (const event of workspace.sourceState.allocationEvents) {
     if (event.allocationId !== allocationId || dateOnly(event.occurredAt) > throughDate) continue;
@@ -286,7 +287,9 @@ function allocationAmountsAt(
         grossReserved += event.amount.amountMinor;
         break;
       case "APPLY":
-        applied += event.amount.amountMinor;
+        if (event.movementId && movementStatus.get(event.movementId) === "ACTIVE") {
+          applied += event.amount.amountMinor;
+        }
         break;
     }
   }

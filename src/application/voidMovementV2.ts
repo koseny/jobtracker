@@ -15,6 +15,22 @@ export async function voidMovementV2(
   repository: CashFlowRepositoryV2,
   command: VoidMovementV2Command,
 ): Promise<CashFlowWorkspaceV2> {
+  return voidInScope(repository, command, "unlinked");
+}
+
+/** Void a linked actual while retaining PlanRealization and allocation APPLY history. */
+export async function voidLinkedMovementV2(
+  repository: CashFlowRepositoryV2,
+  command: VoidMovementV2Command,
+): Promise<CashFlowWorkspaceV2> {
+  return voidInScope(repository, command, "linked");
+}
+
+async function voidInScope(
+  repository: CashFlowRepositoryV2,
+  command: VoidMovementV2Command,
+  scope: "unlinked" | "linked",
+): Promise<CashFlowWorkspaceV2> {
   const request = structuredClone(command);
   if (request.reason !== undefined &&
       (typeof request.reason !== "string" || !request.reason.trim())) {
@@ -27,9 +43,32 @@ export async function voidMovementV2(
     if (movement.lifecycleStatus !== "ACTIVE") {
       throw new VoidMovementV2ScopeError("Only an ACTIVE movement can be voided.");
     }
-    if (source.planRealizations.some(value => value.movementId === movement.movementId) ||
-        source.allocationEvents.some(value => value.movementId === movement.movementId)) {
+    const realizations = source.planRealizations.filter(value => value.movementId === movement.movementId);
+    const events = source.allocationEvents.filter(value => value.movementId === movement.movementId);
+    if (scope === "unlinked" && (realizations.length > 0 || events.length > 0)) {
       throw new VoidMovementV2ScopeError("Financially linked movement void requires separate dependency resolution.");
+    }
+    if (scope === "linked") {
+      if (realizations.length === 0 && events.length === 0) {
+        throw new VoidMovementV2ScopeError("This command requires an existing financial link.");
+      }
+      if (events.some(value => value.eventType !== "APPLY")) {
+        throw new VoidMovementV2ScopeError("Movement-linked non-APPLY allocation events need separate resolution.");
+      }
+      if (events.length > 0) {
+        const current = source.moneyMovementRevisions.find(value =>
+          value.movementId === movement.movementId && value.revisionNo === movement.currentRevisionNo,
+        )!;
+        const payload = current.payload;
+        if (payload.movementType !== "EXPENSE" || !payload.accountId ||
+            events.some(event => {
+              const allocation = source.allocations.find(value => value.allocationId === event.allocationId)!;
+              return allocation.accountId !== payload.accountId ||
+                event.amount.currencyCode !== payload.amount.currencyCode;
+            })) {
+          throw new VoidMovementV2ScopeError("Linked APPLY requires a compatible EXPENSE account and currency.");
+        }
+      }
     }
     return {
       ...source,
