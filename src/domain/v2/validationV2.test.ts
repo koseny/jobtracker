@@ -65,6 +65,23 @@ describe("HCF canonical v2 domain", () => {
     expect(() => validateWorkspaceV2(workspaceWithMovement())).not.toThrow();
   });
 
+  it("accepts explicit same-day anchor coverage and rejects unknown values", () => {
+    const workspace = workspaceWithMovement();
+    workspace.sourceState.accountBalanceAnchors.push({
+      accountBalanceAnchorId: "opening",
+      accountId: "bank-huf",
+      anchorType: "INITIAL",
+      balance: { amountMinor: 100_000, currencyCode: "HUF" },
+      effectiveAt: "2026-09-30T12:00:00Z",
+      sameDayCoverage: "BEFORE_MOVEMENTS",
+    });
+    expect(() => validateWorkspaceV2(workspace)).not.toThrow();
+    workspace.sourceState.accountBalanceAnchors[0].sameDayCoverage = "AFTER_MOVEMENTS";
+    expect(() => validateWorkspaceV2(workspace)).not.toThrow();
+    workspace.sourceState.accountBalanceAnchors[0].sameDayCoverage = "UNKNOWN" as "BEFORE_MOVEMENTS";
+    expect(() => validateWorkspaceV2(workspace)).toThrow("sameDayCoverage is invalid");
+  });
+
   it("requires currentRevisionNo to point to the latest movement revision", () => {
     const workspace = workspaceWithMovement();
     workspace.sourceState.moneyMovementRevisions.push({

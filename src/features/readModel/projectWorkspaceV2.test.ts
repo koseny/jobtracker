@@ -477,4 +477,34 @@ describe("canonical v2 read-model projection", () => {
     expect(() => projectWorkspaceV2ToOperationalViewModels(source, "2026-09", "EN"))
       .toThrow("same calendar date");
   });
+
+  it("uses explicit opening or closing coverage for the anchor date without changing flows", () => {
+    const source = workspace();
+    const anchor = source.sourceState.accountBalanceAnchors[0];
+    anchor.effectiveAt = "2026-09-05T12:00:00Z";
+
+    anchor.sameDayCoverage = "BEFORE_MOVEMENTS";
+    const opening = projectWorkspaceV2ToOperationalViewModels(source, "2026-09", "EN");
+    expect(opening.accounts.accounts.find(x => x.accountId === "main")?.position.amountMinor).toBe(730_500);
+
+    anchor.sameDayCoverage = "AFTER_MOVEMENTS";
+    const closing = projectWorkspaceV2ToOperationalViewModels(source, "2026-09", "EN");
+    expect(closing.accounts.accounts.find(x => x.accountId === "main")?.position.amountMinor).toBe(225_500);
+    expect(closing.overview.kpis.slice(0, 3)).toEqual(opening.overview.kpis.slice(0, 3));
+  });
+
+  it("applies transfer-date coverage independently to each account", () => {
+    const source = workspace();
+    const [main, eur] = source.sourceState.accountBalanceAnchors;
+    main.effectiveAt = "2026-09-20T08:00:00Z";
+    main.balance.amountMinor = 100_000;
+    main.sameDayCoverage = "BEFORE_MOVEMENTS";
+    eur.effectiveAt = "2026-09-20T18:00:00Z";
+    eur.balance.amountMinor = 20_000;
+    eur.sameDayCoverage = "AFTER_MOVEMENTS";
+
+    const model = projectWorkspaceV2ToOperationalViewModels(source, "2026-09", "EN");
+    expect(model.accounts.accounts.find(x => x.accountId === "main")?.position.amountMinor).toBe(60_000);
+    expect(model.accounts.accounts.find(x => x.accountId === "eur")?.position.amountMinor).toBe(15_000);
+  });
 });

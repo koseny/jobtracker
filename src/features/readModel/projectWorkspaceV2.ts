@@ -241,7 +241,7 @@ function accountPositionAt(
   const anchorDate = anchor ? dateOnly(anchor.effectiveAt) : null;
 
   if (
-    anchorDate &&
+    anchorDate && !anchor?.sameDayCoverage &&
     current.some(row =>
       row.movement.lifecycleStatus === "ACTIVE" &&
       movementDate(row) === anchorDate &&
@@ -257,7 +257,8 @@ function accountPositionAt(
   for (const row of current) {
     const occurredOn = movementDate(row);
     if (occurredOn > throughDate) continue;
-    if (anchorDate && occurredOn <= anchorDate) continue;
+    if (anchorDate && occurredOn < anchorDate) continue;
+    if (anchorDate && occurredOn === anchorDate && anchor?.sameDayCoverage !== "BEFORE_MOVEMENTS") continue;
     amountMinor += accountEffect(row, account);
   }
 
