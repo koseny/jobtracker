@@ -11,6 +11,7 @@ export type CompletionStatus = "OPEN" | "COMPLETED";
 
 export type AccountType = "BANK" | "SAVINGS" | "CASH";
 export type AccountBalanceAnchorType = "INITIAL" | "RECONCILIATION" | "MIGRATION";
+export type AnchorSameDayCoverage = "BEFORE_MOVEMENTS" | "AFTER_MOVEMENTS";
 
 export type MovementType = "INCOME" | "EXPENSE" | "TRANSFER";
 export type MovementLifecycleStatus = "ACTIVE" | "VOIDED";
@@ -112,6 +113,9 @@ export interface AccountBalanceAnchor {
   anchorType: AccountBalanceAnchorType;
   balance: Money;
   effectiveAt: string;
+  // Explicitly states whether the balance includes movements dated on effectiveAt's calendar date.
+  // Absent on older records; a same-day movement then remains ambiguous.
+  sameDayCoverage?: AnchorSameDayCoverage;
   note?: string;
 }
 

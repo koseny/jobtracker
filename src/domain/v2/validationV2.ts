@@ -263,6 +263,13 @@ export function validateWorkspaceV2(workspace: CashFlowWorkspaceV2): void {
     const account = accounts.get(anchor.accountId);
     if (!account) throw new DomainV2ValidationError("AccountBalanceAnchor account must exist.");
     validateMoney(anchor.balance, "AccountBalanceAnchor balance");
+    if (
+      anchor.sameDayCoverage !== undefined &&
+      anchor.sameDayCoverage !== "BEFORE_MOVEMENTS" &&
+      anchor.sameDayCoverage !== "AFTER_MOVEMENTS"
+    ) {
+      throw new DomainV2ValidationError("AccountBalanceAnchor sameDayCoverage is invalid.");
+    }
     if (anchor.balance.currencyCode !== account.currencyCode) {
       throw new DomainV2ValidationError("AccountBalanceAnchor currency must match account currency.");
     }
