@@ -63,7 +63,7 @@ function assertNativeAmount(allocation: Allocation, amount: Money): void {
   }
 }
 
-function assertSafeReserveTimeline(
+export function assertSafeReserveTimeline(
   source: CashFlowSourceStateV2,
   newEvent: AllocationEvent,
 ): void {
@@ -96,8 +96,9 @@ function assertSafeReserveTimeline(
     if (![gross, applied, remaining].every(Number.isSafeInteger)) {
       throw new DomainV2ValidationError("Reserve history exceeds exact safe integer precision.");
     }
-    if (newEvent.eventType === "RELEASE" && day >= newEvent.occurredAt.slice(0, 10) && remaining < 0) {
-      throw new DomainV2ValidationError("RELEASE exceeds the reserve available on its effective day or a later day.");
+    if ((newEvent.eventType === "RELEASE" || newEvent.eventType === "ADJUST") &&
+        day >= newEvent.occurredAt.slice(0, 10) && remaining < 0) {
+      throw new DomainV2ValidationError(`${newEvent.eventType} exceeds the reserve available on its effective day or a later day.`);
     }
   }
 }
