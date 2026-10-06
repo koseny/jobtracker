@@ -238,19 +238,43 @@ export function validateWorkspaceV2(workspace: CashFlowWorkspaceV2): void {
     }
   }
 
-  const revisionsByPlan = new Map<string, number[]>();
+  const plansById = new Map(s.planItems.map(item => [item.planItemId, item]));
+  const revisionsByPlan = new Map<string, typeof s.planRevisions>();
   for (const revision of s.planRevisions) {
-    if (!planItemIds.has(revision.planItemId)) {
+    const plan = plansById.get(revision.planItemId);
+    if (!plan) {
       throw new DomainV2ValidationError("PlanRevision plan item must exist.");
     }
     positiveInteger(revision.revisionNo, "PlanRevision revisionNo");
-    validateNonNegativeMoney(revision.plannedAmount, "PlanRevision plannedAmount");
-    const numbers = revisionsByPlan.get(revision.planItemId) ?? [];
-    if (numbers.includes(revision.revisionNo)) {
+    if (!revision.previousAmount || !revision.newAmount) {
+      throw new DomainV2ValidationError("PlanRevision amount shape is unsupported.");
+    }
+    validateNonNegativeMoney(revision.previousAmount, "PlanRevision previousAmount");
+    validateNonNegativeMoney(revision.newAmount, "PlanRevision newAmount");
+    if (![revision.previousAmount.amountMinor, revision.newAmount.amountMinor].every(Number.isSafeInteger) ||
+        revision.previousAmount.currencyCode !== plan.currentPlannedAmount.currencyCode ||
+        revision.newAmount.currencyCode !== plan.currentPlannedAmount.currencyCode) {
+      throw new DomainV2ValidationError("PlanRevision amounts must use exact native-currency Money.");
+    }
+    const revisions = revisionsByPlan.get(revision.planItemId) ?? [];
+    if (revisions.some(value => value.revisionNo === revision.revisionNo)) {
       throw new DomainV2ValidationError("PlanRevision revisionNo must be unique per PlanItem.");
     }
-    numbers.push(revision.revisionNo);
-    revisionsByPlan.set(revision.planItemId, numbers);
+    revisions.push(revision);
+    revisionsByPlan.set(revision.planItemId, revisions);
+  }
+  for (const [planItemId, revisions] of revisionsByPlan) {
+    const ordered = [...revisions].sort((a, b) => a.revisionNo - b.revisionNo);
+    ordered.forEach((revision, index) => {
+      if (revision.revisionNo !== index + 1 ||
+          revision.previousAmount.amountMinor === revision.newAmount.amountMinor ||
+          (index > 0 && revision.previousAmount.amountMinor !== ordered[index - 1].newAmount.amountMinor)) {
+        throw new DomainV2ValidationError("PlanRevision history must be continuous.");
+      }
+    });
+    if (ordered.at(-1)!.newAmount.amountMinor !== plansById.get(planItemId)!.currentPlannedAmount.amountMinor) {
+      throw new DomainV2ValidationError("PlanRevision current amount must match PlanItem.");
+    }
   }
 
   const accounts = accountById(s.accounts);

@@ -92,7 +92,8 @@ export interface PlanRevision {
   planRevisionId: string;
   planItemId: string;
   revisionNo: number;
-  plannedAmount: Money;
+  previousAmount: Money;
+  newAmount: Money;
   changedAt: string;
   reason?: string;
 }
