@@ -8,7 +8,7 @@ import { DomainV2ValidationError, emptySourceStateV2, validateWorkspaceV2 } from
 import { projectWorkspaceV2ToOperationalViewModels } from "../features/readModel/projectWorkspaceV2";
 import { cancelPlanItemV2 } from "./cancelPlanItemV2";
 import { createPlanItemV2 } from "./createPlanItemV2";
-import { movePlanItemV2, type MovePlanItemV2Command } from "./movePlanItemV2";
+import { movePlanItemV2, planMoveAvailability, type MovePlanItemV2Command } from "./movePlanItemV2";
 
 const createdAt = "2026-10-01T12:00:00Z";
 const changedAt = "2026-10-02T12:00:00Z";
@@ -106,6 +106,8 @@ describe.each(repositories)("dormant v2 plan order — $name", ({ create }) => {
     expect(projectWorkspaceV2ToOperationalViewModels(saved, "2026-10", "EN")
       .month.spendingGroups.flatMap(group => group.rows).map(row => row.id))
       .toEqual(["expense-c", "expense-a"]);
+    expect(planMoveAvailability(saved.sourceState, "expense-c")).toEqual({ UP: false, DOWN: true });
+    expect(planMoveAvailability(saved.sourceState, "expense-b")).toEqual({ UP: false, DOWN: false });
   });
 
   it("rejects invalid orders, edge moves and cross-scope movement without saving", async () => {

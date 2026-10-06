@@ -217,6 +217,14 @@
   font-weight: 800;
 }
 
+.hcf-month-row--movable {
+  grid-template-columns: minmax(110px, 1.6fr) minmax(80px, .9fr)
+    minmax(80px, .9fr) minmax(72px, .8fr) minmax(70px, .8fr) 108px;
+}
+
+.hcf-month-row__actions { display: flex; gap: 3px; justify-content: flex-end; }
+.hcf-row-action:disabled { opacity: .35; cursor: not-allowed; }
+
 .hcf-month-row__name {
   min-width: 0;
   display: flex;
@@ -361,6 +369,10 @@
     grid-template-columns: minmax(120px, 1.7fr) minmax(82px, 1fr) minmax(82px, 1fr) 34px;
   }
 
+  .hcf-month-row--movable {
+    grid-template-columns: minmax(120px, 1.7fr) minmax(82px, 1fr) minmax(82px, 1fr) 108px;
+  }
+
   .hcf-month-row > :nth-child(4),
   .hcf-month-row > :nth-child(5) {
     display: none;
@@ -394,6 +406,10 @@
     grid-template-columns: minmax(100px, 1.5fr) minmax(74px, 1fr) minmax(74px, 1fr) 32px;
     font-size: .75rem;
     padding-inline: 8px;
+  }
+
+  .hcf-month-row--movable {
+    grid-template-columns: minmax(100px, 1.5fr) minmax(74px, 1fr) minmax(74px, 1fr) 108px;
   }
 
   .hcf-month-panel__actions {

@@ -84,6 +84,11 @@ type WorkspaceProps = {
   onCalendarFocusChange: (focus: boolean) => void;
   viewModels?: HcfOperationalViewModels;
   onActionIntent?: (intent: DormantActionIntent) => void;
+  onPlanAdd?: (direction: "INCOME" | "EXPENSE") => void;
+  onPlanOpen?: (id: string) => void;
+  onPlanMove?: (id: string, move: "UP" | "DOWN") => void;
+  canPlanMove?: (id: string, move: "UP" | "DOWN") => boolean;
+  planBusy?: boolean;
 };
 
 export function DormantHcfWorkspace({
@@ -94,6 +99,11 @@ export function DormantHcfWorkspace({
   onCalendarFocusChange,
   viewModels,
   onActionIntent,
+  onPlanAdd,
+  onPlanOpen,
+  onPlanMove,
+  canPlanMove,
+  planBusy,
 }: WorkspaceProps) {
   const { language } = useHcfShellPreferences();
   const models = useMemo(
@@ -126,8 +136,11 @@ export function DormantHcfWorkspace({
           onNextMonth={nextMonth}
           onCurrentMonth={currentMonth}
           onSelectedMonthChange={onSelectedMonthChange}
-          onAdd={direction => emit({ kind: "MONTH_ADD", detail: direction })}
-          onOpenItem={id => emit({ kind: "MONTH_OPEN_ITEM", id })}
+          onAdd={direction => onPlanAdd ? onPlanAdd(direction) : emit({ kind: "MONTH_ADD", detail: direction })}
+          onOpenItem={id => onPlanOpen ? onPlanOpen(id) : emit({ kind: "MONTH_OPEN_ITEM", id })}
+          onMoveItem={onPlanMove}
+          canMoveItem={canPlanMove}
+          planBusy={planBusy}
           onOpenAccounts={() => onNavigate("accounts")}
         />
       );

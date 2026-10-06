@@ -1,12 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import type { IdentityUser } from "../../adapters/identity/identity";
+import { cancelPlanItemV2 } from "../../application/cancelPlanItemV2";
+import { createPlanItemV2 } from "../../application/createPlanItemV2";
 import { loadValidatedWorkspaceV2ReadOnly } from "../../application/loadWorkspaceV2ReadOnly";
+import { movePlanItemV2, planMoveAvailability } from "../../application/movePlanItemV2";
+import { revisePlanItemAmountV2 } from "../../application/revisePlanItemAmountV2";
+import { updatePlanItemDetailsV2 } from "../../application/updatePlanItemDetailsV2";
 import type { OwnerPreferencesRepository } from "../../domain/ownerPreferences";
-import type { CashFlowWorkspaceV2 } from "../../domain/v2/cashFlowV2";
+import type { CashFlowWorkspaceV2, Money, PlanDirection } from "../../domain/v2/cashFlowV2";
 import type { CashFlowRepositoryV2 } from "../../domain/v2/repositoryV2";
+import { WorkspaceV2RevisionConflictError } from "../../domain/v2/repositoryV2";
 import { HcfAppShell } from "../appShell/HcfAppShell";
 import { useHcfShellPreferences } from "../appShell/HcfShellPreferenceContext";
 import type { AppDestination } from "../appShell/appShellModel";
+import { PlanEditor, type PlanEditorSelection } from "../month/PlanEditor";
 import { projectWorkspaceV2ToOperationalViewModels } from "../readModel/projectWorkspaceV2";
 import { shellFocusMode } from "./dormantAppModel";
 import {
@@ -28,6 +35,11 @@ type Props = {
 
 function currentMonthId(): string {
   return new Date().toISOString().slice(0, 7);
+}
+
+function ConnectedPlanEditor(props: Omit<ComponentProps<typeof PlanEditor>, "language">) {
+  const { language } = useHcfShellPreferences();
+  return <PlanEditor {...props} language={language} />;
 }
 
 function ReadOnlyStatus({
@@ -71,6 +83,11 @@ function CanonicalProjectedWorkspace({
   onSelectedMonthChange,
   onCalendarFocusChange,
   onActionIntent,
+  onPlanAdd,
+  onPlanOpen,
+  onPlanMove,
+  canPlanMove,
+  planBusy,
 }: {
   workspace: CashFlowWorkspaceV2;
   destination: AppDestination;
@@ -79,6 +96,11 @@ function CanonicalProjectedWorkspace({
   onSelectedMonthChange: (monthId: string) => void;
   onCalendarFocusChange: (focus: boolean) => void;
   onActionIntent?: (intent: DormantActionIntent) => void;
+  onPlanAdd: (direction: PlanDirection) => void;
+  onPlanOpen: (id: string) => void;
+  onPlanMove: (id: string, move: "UP" | "DOWN") => void;
+  canPlanMove: (id: string, move: "UP" | "DOWN") => boolean;
+  planBusy: boolean;
 }) {
   const { language } = useHcfShellPreferences();
   const models = useMemo(
@@ -95,6 +117,11 @@ function CanonicalProjectedWorkspace({
       onCalendarFocusChange={onCalendarFocusChange}
       viewModels={models}
       onActionIntent={onActionIntent}
+      onPlanAdd={onPlanAdd}
+      onPlanOpen={onPlanOpen}
+      onPlanMove={onPlanMove}
+      canPlanMove={canPlanMove}
+      planBusy={planBusy}
     />
   );
 }
@@ -114,6 +141,10 @@ export function HcfDormantV2Application({
   const [calendarFocus, setCalendarFocus] = useState(false);
   const [workspace, setWorkspace] = useState<CashFlowWorkspaceV2 | null | undefined>(undefined);
   const [loadError, setLoadError] = useState(false);
+  const [selection, setSelection] = useState<PlanEditorSelection | null>(null);
+  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -143,13 +174,59 @@ export function HcfDormantV2Application({
 
   function navigate(next: AppDestination) {
     if (next !== "calendar") setCalendarFocus(false);
+    setSelection(null);
     setDestination(next);
   }
 
   function changeMonth(next: string) {
     setCalendarFocus(false);
     setSelectedMonth(normalizeMonthId(next));
+    setSelection(null);
   }
+
+  function openPlan(id: string) {
+    if (busyRef.current) return;
+    const item = workspace?.sourceState.planItems.find(value => value.planItemId === id && value.planStatus === "ACTIVE");
+    if (!item) return;
+    setActionError(null);
+    setSelection({ kind: "EDIT", item });
+  }
+
+  async function runPlanCommand(command: (current: CashFlowWorkspaceV2) => Promise<CashFlowWorkspaceV2>) {
+    if (!workspace || busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const next = await command(workspace);
+      setWorkspace(next);
+      setSelection(null);
+    } catch (cause) {
+      if (cause instanceof WorkspaceV2RevisionConflictError) {
+        try {
+          const refreshed = await loadValidatedWorkspaceV2ReadOnly(financialRepository, user.id, workspaceId);
+          setWorkspace(refreshed);
+          setSelection(null);
+        } catch (reloadCause) {
+          console.error(reloadCause);
+          setLoadError(true);
+        }
+      }
+      setActionError(cause instanceof Error ? cause.message : "Plan change failed.");
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  }
+
+  const context = (current: CashFlowWorkspaceV2) => ({
+    ownerPartitionId: user.id,
+    workspaceId,
+    expectedRevision: current.revision,
+    changedAt: new Date().toISOString(),
+  });
+
+  const selectedId = selection?.kind === "EDIT" ? selection.item.planItemId : null;
 
   return (
     <HcfAppShell
@@ -167,6 +244,8 @@ export function HcfDormantV2Application({
       ) : workspace === null ? (
         <ReadOnlyStatus status="NOT_FOUND" />
       ) : (
+        <>
+        {actionError && !selection && <p role="alert" className="hcf-dormant-deferred">{actionError}</p>}
         <CanonicalProjectedWorkspace
           workspace={workspace}
           destination={destination}
@@ -175,7 +254,30 @@ export function HcfDormantV2Application({
           onSelectedMonthChange={changeMonth}
           onCalendarFocusChange={setCalendarFocus}
           onActionIntent={onActionIntent}
+          onPlanAdd={direction => { if (busyRef.current) return; setActionError(null); setSelection({ kind: "CREATE", direction, monthId: selectedMonth }); }}
+          onPlanOpen={openPlan}
+          onPlanMove={(id, move) => void runPlanCommand(current => movePlanItemV2(financialRepository, { ...context(current), planItemId: id, move }))}
+          canPlanMove={(id, move) => planMoveAvailability(workspace.sourceState, id)[move]}
+          planBusy={busy}
         />
+        {selection && <ConnectedPlanEditor
+          key={selection.kind === "CREATE" ? `${selection.monthId}-${selection.direction}` : selection.item.planItemId}
+          selection={selection}
+          busy={busy}
+          error={actionError}
+          onClose={() => { setSelection(null); setActionError(null); }}
+          onCreate={(name, amount, expectedDate) => {
+            if (selection.kind !== "CREATE") return;
+            void runPlanCommand(current => createPlanItemV2(financialRepository, {
+              ...context(current), planItemId: crypto.randomUUID(),
+              item: { monthId: selection.monthId, direction: selection.direction, name, currentPlannedAmount: amount, ...(expectedDate ? { expectedDate } : {}) },
+            }));
+          }}
+          onDetails={(name, expectedDate) => { if (selectedId) void runPlanCommand(current => updatePlanItemDetailsV2(financialRepository, { ...context(current), planItemId: selectedId, name, expectedDate })); }}
+          onAmount={(newAmount: Money) => { if (selectedId) void runPlanCommand(current => revisePlanItemAmountV2(financialRepository, { ...context(current), planItemId: selectedId, planRevisionId: crypto.randomUUID(), newAmount })); }}
+          onCancel={() => { if (selectedId) void runPlanCommand(current => cancelPlanItemV2(financialRepository, { ...context(current), planItemId: selectedId })); }}
+        />}
+        </>
       )}
     </HcfAppShell>
   );
