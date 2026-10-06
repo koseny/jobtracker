@@ -246,6 +246,9 @@ export function validateWorkspaceV2(workspace: CashFlowWorkspaceV2): void {
       throw new DomainV2ValidationError("PlanRevision plan item must exist.");
     }
     positiveInteger(revision.revisionNo, "PlanRevision revisionNo");
+    if (!revision.previousAmount || !revision.newAmount) {
+      throw new DomainV2ValidationError("PlanRevision amount shape is unsupported.");
+    }
     validateNonNegativeMoney(revision.previousAmount, "PlanRevision previousAmount");
     validateNonNegativeMoney(revision.newAmount, "PlanRevision newAmount");
     if (![revision.previousAmount.amountMinor, revision.newAmount.amountMinor].every(Number.isSafeInteger) ||
