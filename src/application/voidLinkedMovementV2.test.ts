@@ -20,7 +20,7 @@ function workspace(withApply = true): CashFlowWorkspaceV2 {
   s.moneyMovementRevisions = ["actual", "other"].map(movementId => ({ movementRevisionId: movementId + "-r1", movementId, revisionNo: 1, changedAt: createdAt,
     payload: { movementType: "EXPENSE" as const, occurredOn: "2026-09-30", amount: money(movementId === "actual" ? 2000 : 500), accountId: "bank", description: movementId },
   }));
-  s.planItems = [{ planItemId: "plan", monthId: "2026-09", direction: "EXPENSE", name: "Plan", currentPlannedAmount: money(2000), planStatus: "ACTIVE", completionStatus: "OPEN", createdAt, updatedAt: createdAt }];
+  s.planItems = [{ planItemId: "plan", monthId: "2026-09", direction: "EXPENSE", sortOrder: 0, name: "Plan", currentPlannedAmount: money(2000), planStatus: "ACTIVE", completionStatus: "OPEN", createdAt, updatedAt: createdAt }];
   s.planRealizations = [{ planRealizationId: "real", planItemId: "plan", movementId: "actual", realizedAmount: money(1200), createdAt }];
   if (withApply) {
     s.allocations = [{ allocationId: "reserve", accountId: "bank", purpose: "Reserve", currencyCode: "HUF", state: "ACTIVE", createdAt, updatedAt: createdAt }];

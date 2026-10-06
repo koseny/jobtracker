@@ -18,7 +18,7 @@ function workspace(direction: "INCOME" | "EXPENSE" = "EXPENSE", withApply = fals
   s.accountBalanceAnchors = s.accounts.map(account => ({ accountBalanceAnchorId: account.accountId + "-anchor", accountId: account.accountId, anchorType: "INITIAL", balance: money(10_000), effectiveAt: createdAt }));
   s.moneyMovements = [{ movementId: "actual", movementType: direction, lifecycleStatus: "ACTIVE", currentRevisionNo: 1, createdAt, updatedAt: createdAt }];
   s.moneyMovementRevisions = [{ movementRevisionId: "r1", movementId: "actual", revisionNo: 1, changedAt: createdAt, payload: { movementType: direction, occurredOn: "2026-09-30", amount: money(3000), accountId: "bank", description: "Original" } }];
-  s.planItems = [1, 2].map(n => ({ planItemId: `plan-${n}`, monthId: "2026-09", direction, name: `Plan ${n}`, currentPlannedAmount: money(3000), planStatus: "ACTIVE", completionStatus: "OPEN", createdAt, updatedAt: createdAt }));
+  s.planItems = [1, 2].map(n => ({ planItemId: `plan-${n}`, monthId: "2026-09", direction, sortOrder: n - 1, name: `Plan ${n}`, currentPlannedAmount: money(3000), planStatus: "ACTIVE", completionStatus: "OPEN", createdAt, updatedAt: createdAt }));
   s.planRealizations = [1200, 800].map((amountMinor, i) => ({ planRealizationId: `real-${i}`, planItemId: `plan-${i + 1}`, movementId: "actual", realizedAmount: money(amountMinor), createdAt }));
   if (withApply) {
     s.allocations = [1, 2].map(n => ({ allocationId: `reserve-${n}`, accountId: "bank", purpose: `Reserve ${n}`, currencyCode: "HUF", state: "ACTIVE", createdAt, updatedAt: createdAt }));

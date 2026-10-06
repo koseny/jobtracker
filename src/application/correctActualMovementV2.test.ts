@@ -117,7 +117,7 @@ describe.each(repositories)("standalone correction — $name", ({ create }) => {
   it.each(["plan", "allocation"])("refuses %s-linked corrections without changing dependencies", async link => {
     const repository = create(), original = workspace();
     if (link === "plan") {
-      original.sourceState.planItems.push({ planItemId: "plan", monthId: "2026-09", direction: "EXPENSE", name: "Plan", currentPlannedAmount: { amountMinor: 2000, currencyCode: "HUF" }, planStatus: "ACTIVE", completionStatus: "OPEN", createdAt, updatedAt: createdAt });
+      original.sourceState.planItems.push({ planItemId: "plan", monthId: "2026-09", direction: "EXPENSE", sortOrder: 0, name: "Plan", currentPlannedAmount: { amountMinor: 2000, currencyCode: "HUF" }, planStatus: "ACTIVE", completionStatus: "OPEN", createdAt, updatedAt: createdAt });
       original.sourceState.planRealizations.push({ planRealizationId: "link", planItemId: "plan", movementId: "actual", realizedAmount: { amountMinor: 2000, currencyCode: "HUF" }, createdAt });
     } else {
       original.sourceState.allocations.push({ allocationId: "reserve", accountId: "bank", purpose: "Reserve", currencyCode: "HUF", state: "ACTIVE", createdAt, updatedAt: createdAt });

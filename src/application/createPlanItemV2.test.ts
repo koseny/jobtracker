@@ -47,6 +47,7 @@ describe.each(repositories)("dormant v2 plan creation — $name", ({ create }) =
     expect(saved.revision).toBe(2);
     expect(saved.sourceState.planItems).toEqual([{
       planItemId: "plan-one", monthId: "2026-10", direction, name: "Work",
+      sortOrder: 0,
       currentPlannedAmount: { amountMinor: 5_000, currencyCode: "HUF" },
       expectedDate: "2026-10-15", planStatus: "ACTIVE", completionStatus: "OPEN",
       createdAt: request.changedAt, updatedAt: request.changedAt,

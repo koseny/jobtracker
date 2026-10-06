@@ -19,7 +19,7 @@ function workspace(): CashFlowWorkspaceV2 {
     { accountId: "euro", name: "Euro", accountType: "SAVINGS", currencyCode: "EUR", active: true, createdAt, updatedAt: createdAt },
   ];
   s.accountBalanceAnchors = s.accounts.map(account => ({ accountBalanceAnchorId: account.accountId + "-anchor", accountId: account.accountId, anchorType: "INITIAL", balance: money(10_000, account.currencyCode), effectiveAt: createdAt }));
-  s.planItems = [{ planItemId: "insurance", monthId: "2026-10", direction: "EXPENSE", name: "Insurance", currentPlannedAmount: money(5_000), planStatus: "ACTIVE", completionStatus: "OPEN", createdAt, updatedAt: createdAt }];
+  s.planItems = [{ planItemId: "insurance", monthId: "2026-10", direction: "EXPENSE", sortOrder: 0, name: "Insurance", currentPlannedAmount: money(5_000), planStatus: "ACTIVE", completionStatus: "OPEN", createdAt, updatedAt: createdAt }];
   return { workspaceId: "home", ownerPartitionId: "owner-a", schemaVersion: 2, reportingCurrencyCode: "HUF", revision: 1, createdAt, updatedAt: createdAt, sourceState: s };
 }
 

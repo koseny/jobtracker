@@ -386,13 +386,9 @@ function buildMonthGroups(
 ): MonthGroupModel[] {
   const groups = new Map<string, MonthGroupModel>();
 
-  for (const plan of workspace.sourceState.planItems) {
-    if (
-      plan.monthId !== monthId ||
-      plan.direction !== direction ||
-      plan.planStatus !== "ACTIVE"
-    ) continue;
-
+  for (const plan of [...workspace.sourceState.planItems]
+    .filter(plan => plan.monthId === monthId && plan.direction === direction && plan.planStatus === "ACTIVE")
+    .sort((a, b) => a.sortOrder - b.sortOrder)) {
     const label = groupingLabel(workspace, plan, language);
     const groupId = plan.groupId || plan.categoryId || `ungrouped-${direction}`;
     const group = groups.get(groupId) ?? { id: groupId, name: label, rows: [] };

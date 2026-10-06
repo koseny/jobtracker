@@ -77,9 +77,26 @@ describe("v1→v2 migration candidate", () => {
     expect(first.sourceState.planItems).toEqual([
       expect.objectContaining({
         planItemId: "legacy-plan:insurance",
+        sortOrder: 0,
         monthId: "2026-10",
         currentPlannedAmount: { amountMinor: 120_000, currencyCode: "HUF" },
       }),
+    ]);
+  });
+
+  it("preserves one-time legacy item order independently per month and direction", () => {
+    const source = legacyWorkspace();
+    const insurance = source.items[2];
+    source.items.push(
+      { ...insurance, id: "rent", name: "Rent", schedule: { frequency: "oneTime", date: "2026-10-01" } },
+      { ...insurance, id: "bonus", name: "Bonus", direction: "income", expenseType: null,
+        expectedAmountHuf: 10_000, schedule: { frequency: "oneTime", date: "2026-10-20" } },
+      { ...insurance, id: "november", name: "November", schedule: { frequency: "oneTime", date: "2026-11-01" } },
+    );
+    const migrated = migrateWorkspaceV1ToV2(source, "owner-a", "2026-09-30T12:00:00Z");
+    expect(migrated.sourceState.planItems.map(item => [item.planItemId, item.sortOrder])).toEqual([
+      ["legacy-plan:insurance", 0], ["legacy-plan:rent", 1],
+      ["legacy-plan:bonus", 0], ["legacy-plan:november", 0],
     ]);
   });
 

@@ -74,6 +74,8 @@ export interface PlanItem {
   planItemId: string;
   monthId: string;
   direction: PlanDirection;
+  /** Stable order among plan items of the same month and direction. */
+  sortOrder: number;
   name: string;
   currentPlannedAmount: Money;
   planStatus: PlanStatus;
