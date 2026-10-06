@@ -115,6 +115,9 @@ describe.each(repositories)("dormant v2 plan amount revision — $name", ({ crea
     const brokenSequence = structuredClone(first);
     brokenSequence.sourceState.planRevisions[0].revisionNo = 2;
     expect(() => validateWorkspaceV2(brokenSequence)).toThrow("history must be continuous");
+    const oldShape = structuredClone(first);
+    Reflect.deleteProperty(oldShape.sourceState.planRevisions[0], "previousAmount");
+    expect(() => validateWorkspaceV2(oldShape)).toThrow("amount shape is unsupported");
     const second = await revisePlanItemAmountV2(repository, command({
       expectedRevision: 3, planRevisionId: "plan-r2",
       newAmount: { amountMinor: 7_000, currencyCode: "HUF" },
