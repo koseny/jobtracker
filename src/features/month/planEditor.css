@@ -1,0 +1,11 @@
+.hcf-plan-editor { position: fixed; z-index: 30; right: 16px; bottom: 16px; width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; padding: 20px; border: 1px solid var(--hcf-border); border-radius: 14px; background: var(--hcf-surface); color: var(--hcf-text); box-shadow: 0 12px 45px rgba(15,23,42,.24); }
+.hcf-plan-editor header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hcf-plan-editor h2 { font-size: 1.15rem; margin: 0; }
+.hcf-plan-editor p { color: var(--hcf-muted); }
+.hcf-plan-editor form { display: grid; gap: 10px; margin: 16px 0; }
+.hcf-plan-editor label { display: grid; gap: 4px; font-size: .85rem; font-weight: 700; }
+.hcf-plan-editor input, .hcf-plan-editor select { width: 100%; box-sizing: border-box; min-height: 38px; padding: 6px 9px; border: 1px solid var(--hcf-border); border-radius: 7px; background: var(--hcf-surface); color: var(--hcf-text); font: inherit; }
+.hcf-plan-editor button { min-height: 36px; padding: 5px 10px; border: 1px solid var(--hcf-border); border-radius: 7px; background: var(--hcf-surface-subtle); color: var(--hcf-text); font: inherit; cursor: pointer; }
+.hcf-plan-editor button:disabled { opacity: .5; cursor: not-allowed; }
+.hcf-plan-editor__cancel { display: flex; gap: 8px; }
+.hcf-plan-editor .hcf-plan-editor__error { color: #b42318; }

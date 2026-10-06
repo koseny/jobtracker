@@ -1,4 +1,4 @@
-import type { CashFlowWorkspaceV2 } from "../domain/v2/cashFlowV2";
+import type { CashFlowSourceStateV2, CashFlowWorkspaceV2 } from "../domain/v2/cashFlowV2";
 import type { CashFlowRepositoryV2 } from "../domain/v2/repositoryV2";
 import { DomainV2ValidationError } from "../domain/v2/validationV2";
 import {
@@ -9,6 +9,20 @@ import {
 export interface MovePlanItemV2Command extends WorkspaceV2CommandContext {
   planItemId: string;
   move: "UP" | "DOWN";
+}
+
+export function planMoveAvailability(
+  source: CashFlowSourceStateV2,
+  planItemId: string,
+): { UP: boolean; DOWN: boolean } {
+  const item = source.planItems.find(value => value.planItemId === planItemId);
+  if (!item || item.planStatus !== "ACTIVE") return { UP: false, DOWN: false };
+  const peers = source.planItems
+    .filter(value => value.monthId === item.monthId &&
+      value.direction === item.direction && value.planStatus === "ACTIVE")
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const index = peers.findIndex(value => value.planItemId === planItemId);
+  return { UP: index > 0, DOWN: index < peers.length - 1 };
 }
 
 /** Swap order with the adjacent active item in the same month and direction. */

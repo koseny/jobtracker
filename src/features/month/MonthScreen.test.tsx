@@ -62,4 +62,15 @@ describe("MonthScreen", () => {
     expect(html).not.toContain("hcf-month-panel--spending");
     expect(html).not.toContain("hcf-month-position");
   });
+
+  it("offers connected move controls and disables unavailable edges", () => {
+    const html = renderToStaticMarkup(<MonthScreen language="EN" model={model}
+      onMoveItem={() => {}} canMoveItem={(id, move) => id === "salary" && move === "DOWN"} />);
+    expect(html).toContain("hcf-month-row--movable");
+    expect(html).toMatch(/title="Move up" disabled=""/);
+    expect(html).toMatch(/title="Move down"/);
+    expect(html).toContain("Salary — Move down");
+    const staticHtml = renderToStaticMarkup(<MonthScreen language="EN" model={model} />);
+    expect(staticHtml).not.toContain("Move up");
+  });
 });

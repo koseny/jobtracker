@@ -26,11 +26,20 @@ type Props = {
   onSelectedMonthChange?: (monthId: string) => void;
   onAdd?: (direction: PlanDirection) => void;
   onOpenItem?: (rowId: string) => void;
+  onMoveItem?: (rowId: string, move: "UP" | "DOWN") => void;
+  canMoveItem?: (rowId: string, move: "UP" | "DOWN") => boolean;
+  planBusy?: boolean;
   onOpenAccounts?: () => void;
 };
 
 function moneyFromMinor(amountMinor: number, currencyCode: Money["currencyCode"]): Money {
   return { amountMinor, currencyCode };
+}
+
+function moveLabel(language: LanguageCode, move: "UP" | "DOWN"): string {
+  if (language === "HU") return move === "UP" ? "Feljebb" : "Lejjebb";
+  if (language === "DE") return move === "UP" ? "Nach oben" : "Nach unten";
+  return move === "UP" ? "Move up" : "Move down";
 }
 
 function Totals({
@@ -85,10 +94,16 @@ function MonthRow({
   row,
   language,
   onOpenItem,
+  onMoveItem,
+  canMoveItem,
+  planBusy,
 }: {
   row: MonthItemRowModel;
   language: LanguageCode;
   onOpenItem?: (rowId: string) => void;
+  onMoveItem?: Props["onMoveItem"];
+  canMoveItem?: Props["canMoveItem"];
+  planBusy?: boolean;
 }) {
   const difference = signedMoneyDifference(row.actual, row.planned);
   const differenceLabel = difference
@@ -96,7 +111,7 @@ function MonthRow({
     : "—";
 
   return (
-    <div className="hcf-month-row">
+    <div className={onMoveItem ? "hcf-month-row hcf-month-row--movable" : "hcf-month-row"}>
       <div className="hcf-month-row__name">
         <strong>{row.name}</strong>
         {row.helpText && (
@@ -110,14 +125,21 @@ function MonthRow({
       <span>{row.actual ? formatMoney(row.actual, language) : "—"}</span>
       <span>{differenceLabel}</span>
       <span>{presentationText(language, row.completionStatus === "OPEN" ? "open" : "completed")}</span>
-      <button
-        type="button"
-        className="hcf-row-action"
-        aria-label={`${row.name} — ${presentationText(language, "information")}`}
-        onClick={() => onOpenItem?.(row.id)}
-      >
-        ⋯
-      </button>
+      <span className="hcf-month-row__actions">
+        {onMoveItem && (["UP", "DOWN"] as const).map(move => (
+          <button key={move} type="button" className="hcf-row-action"
+            aria-label={`${row.name} — ${moveLabel(language, move)}`}
+            title={moveLabel(language, move)}
+            disabled={planBusy || !canMoveItem?.(row.id, move)}
+            onClick={() => onMoveItem(row.id, move)}>
+            {move === "UP" ? "↑" : "↓"}
+          </button>
+        ))}
+        <button type="button" className="hcf-row-action"
+          aria-label={`${row.name} — ${presentationText(language, "information")}`}
+          disabled={planBusy}
+          onClick={() => onOpenItem?.(row.id)}>⋯</button>
+      </span>
     </div>
   );
 }
@@ -136,6 +158,9 @@ function CashFlowPanel({
   onExitFocus,
   onAdd,
   onOpenItem,
+  onMoveItem,
+  canMoveItem,
+  planBusy,
   onQueryChange,
   onCompletionFilterChange,
   onGroupedChange,
@@ -155,6 +180,9 @@ function CashFlowPanel({
   onExitFocus: () => void;
   onAdd?: () => void;
   onOpenItem?: (rowId: string) => void;
+  onMoveItem?: Props["onMoveItem"];
+  canMoveItem?: Props["canMoveItem"];
+  planBusy?: boolean;
   onQueryChange: (query: string) => void;
   onCompletionFilterChange: (filter: CompletionFilter) => void;
   onGroupedChange: (grouped: boolean) => void;
@@ -198,7 +226,7 @@ function CashFlowPanel({
               ⤢ <span>{presentationText(language, "focus")}</span>
             </button>
           )}
-          <button type="button" className="hcf-primary-action" onClick={onAdd}>
+          <button type="button" className="hcf-primary-action" onClick={onAdd} disabled={planBusy}>
             + {presentationText(language, "add")}
           </button>
         </div>
@@ -243,7 +271,7 @@ function CashFlowPanel({
       )}
 
       <div className="hcf-month-table" role="table" aria-label={title}>
-        <div className="hcf-month-row hcf-month-row--head" role="row">
+        <div className={onMoveItem ? "hcf-month-row hcf-month-row--head hcf-month-row--movable" : "hcf-month-row hcf-month-row--head"} role="row">
           <span>{title}</span>
           <span>{presentationText(language, "planned")}</span>
           <span>{presentationText(language, "actual")}</span>
@@ -277,6 +305,9 @@ function CashFlowPanel({
                   row={row}
                   language={language}
                   onOpenItem={onOpenItem}
+                  onMoveItem={onMoveItem}
+                  canMoveItem={canMoveItem}
+                  planBusy={planBusy}
                 />
               ))}
             </section>
@@ -350,6 +381,9 @@ export function MonthScreen({
   onSelectedMonthChange,
   onAdd,
   onOpenItem,
+  onMoveItem,
+  canMoveItem,
+  planBusy,
   onOpenAccounts,
 }: Props) {
   const [focusPanel, setFocusPanel] = useState<FocusPanel>(initialFocusPanel ?? null);
@@ -396,6 +430,9 @@ export function MonthScreen({
     onCompletionFilterChange: setCompletionFilter,
     onGroupedChange: setGrouped,
     onOpenItem,
+    onMoveItem,
+    canMoveItem,
+    planBusy,
   };
 
   return (
