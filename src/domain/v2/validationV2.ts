@@ -220,9 +220,18 @@ export function validateWorkspaceV2(workspace: CashFlowWorkspaceV2): void {
   }
 
   const planItemIds = new Set(s.planItems.map(x => x.planItemId));
+  const planOrders = new Set<string>();
   for (const item of s.planItems) {
     requiredText(item.name, "PlanItem name");
     validMonth(item.monthId, "PlanItem monthId");
+    if (!Number.isSafeInteger(item.sortOrder) || item.sortOrder < 0) {
+      throw new DomainV2ValidationError("PlanItem sortOrder must be a non-negative exact integer.");
+    }
+    const orderKey = `${item.monthId}:${item.direction}:${item.sortOrder}`;
+    if (planOrders.has(orderKey)) {
+      throw new DomainV2ValidationError("PlanItem sortOrder must be unique per month and direction.");
+    }
+    planOrders.add(orderKey);
     validateNonNegativeMoney(item.currentPlannedAmount, "PlanItem currentPlannedAmount");
     if (item.planTemplateId && !templateIds.has(item.planTemplateId)) {
       throw new DomainV2ValidationError("PlanItem template must exist.");

@@ -62,12 +62,14 @@ function oneTimePlanItemFromLegacy(
   item: CashFlowItem,
   template: PlanTemplate,
   recurrence: RecurrenceRule,
+  sortOrder: number,
 ): PlanItem | null {
   if (recurrence.kind !== "ONE_TIME") return null;
   return {
     planItemId: `legacy-plan:${item.id}`,
     monthId: recurrence.date.slice(0, 7),
     direction: template.direction,
+    sortOrder,
     name: template.name,
     currentPlannedAmount: template.defaultPlannedAmount,
     planStatus: "ACTIVE",
@@ -126,7 +128,11 @@ export function migrateWorkspaceV1ToV2(
   for (const item of source.items) {
     const recurrence = recurrenceFromLegacy(item.id, item.schedule);
     const template = templateFromLegacy(item, recurrence.recurrenceRuleId);
-    const oneTimePlanItem = oneTimePlanItemFromLegacy(item, template, recurrence);
+    const sortOrder = sourceState.planItems.filter(plan =>
+      plan.monthId === (recurrence.kind === "ONE_TIME" ? recurrence.date.slice(0, 7) : "") &&
+      plan.direction === template.direction
+    ).length;
+    const oneTimePlanItem = oneTimePlanItemFromLegacy(item, template, recurrence, sortOrder);
 
     sourceState.recurrenceRules.push(recurrence);
     sourceState.planTemplates.push(template);

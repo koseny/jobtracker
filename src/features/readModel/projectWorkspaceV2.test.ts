@@ -52,6 +52,7 @@ function workspace(): CashFlowWorkspaceV2 {
       planItems: [
         {
           planItemId: "plan-salary",
+          sortOrder: 0,
           monthId: "2026-09",
           direction: "INCOME",
           name: "Salary",
@@ -68,6 +69,7 @@ function workspace(): CashFlowWorkspaceV2 {
         },
         {
           planItemId: "plan-groceries",
+          sortOrder: 0,
           monthId: "2026-09",
           direction: "EXPENSE",
           name: "Groceries",

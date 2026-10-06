@@ -29,19 +29,29 @@ export async function createPlanItemV2(
     throw new DomainV2ValidationError("Planned amount must be a non-negative exact safe integer.");
   }
 
-  return executeWorkspaceV2Command(repository, request, source => ({
-    ...source,
-    planItems: [...source.planItems, {
-      planItemId: request.planItemId,
-      monthId: request.item.monthId,
-      direction: request.item.direction,
-      name: request.item.name.trim(),
-      currentPlannedAmount: { ...request.item.currentPlannedAmount },
-      planStatus: "ACTIVE",
-      completionStatus: "OPEN",
-      ...(request.item.expectedDate === undefined ? {} : { expectedDate: request.item.expectedDate }),
-      createdAt: request.changedAt,
-      updatedAt: request.changedAt,
-    }],
-  }));
+  return executeWorkspaceV2Command(repository, request, source => {
+    const existingOrders = source.planItems
+      .filter(item => item.monthId === request.item.monthId && item.direction === request.item.direction)
+      .map(item => item.sortOrder);
+    const sortOrder = existingOrders.length === 0 ? 0 : Math.max(...existingOrders) + 1;
+    if (!Number.isSafeInteger(sortOrder)) {
+      throw new DomainV2ValidationError("Plan item order exceeds exact integer precision.");
+    }
+    return {
+      ...source,
+      planItems: [...source.planItems, {
+        planItemId: request.planItemId,
+        monthId: request.item.monthId,
+        direction: request.item.direction,
+        sortOrder,
+        name: request.item.name.trim(),
+        currentPlannedAmount: { ...request.item.currentPlannedAmount },
+        planStatus: "ACTIVE",
+        completionStatus: "OPEN",
+        ...(request.item.expectedDate === undefined ? {} : { expectedDate: request.item.expectedDate }),
+        createdAt: request.changedAt,
+        updatedAt: request.changedAt,
+      }],
+    };
+  });
 }
